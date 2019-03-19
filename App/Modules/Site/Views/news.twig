@@ -1,0 +1,7 @@
+{% extends "base.twig" %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+    <small class="text-muted">Дата: {{ data.createdAt | date("d/m/Y H:i") }}</small>
+    <p class="lead mt-3">{{ data.text | raw }}</p>
+{% endblock %}

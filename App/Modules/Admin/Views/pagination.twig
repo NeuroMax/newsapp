@@ -1,0 +1,19 @@
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if p.prevUrl %}
+            <li class="page-item">
+                <a class="page-link" href="{{ p.prevUrl }}">Previous</a>
+            </li>
+        {% endif %}
+        {% for page in p.pages %}
+            <li class="page-item {{ page.isCurrent ? 'active' : '' }} {{ page.url ? '' : 'disabled' }}">
+                <a class="page-link" href="{{ page.url }}">{{ page.num }}</a>
+            </li>
+        {% endfor %}
+        {% if p.nextUrl %}
+            <li class="page-item">
+                <a class="page-link" href="{{ p.nextUrl }}">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

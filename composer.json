@@ -1,0 +1,8 @@
+{
+    "require": {
+        "twig/twig": "^2.0",
+        "ext-mysqli": "*",
+        "ext-json": "*",
+        "jasongrimes/paginator": "~1.0"
+    }
+}

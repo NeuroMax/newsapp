@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="{{ asset('bootstrap/css/bootstrap.css') }}">
+        <link rel="stylesheet" href="{{ asset('admin.css') }}">
+        <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+        <title>{{ title }}</title>
+    </head>
+    <body>
+        <main id="main">
+            <header>
+                <nav class="navbar navbar-dark bg-dark fixed-top">
+                    <a class="navbar-brand" href="/admin">Панель администратора</a>
+                </nav>
+            </header>
+            <div class="container shadow-lg p-4">
+                <div class="content">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </main>
+        <script src="{{ asset('jquery/jquery.js') }}"></script>
+        <script src="{{ asset('bootstrap/js/bootstrap.js') }}"></script>
+        <script src="{{ asset('script.js') }}"></script>
+        <script src="https://cloud.tinymce.com/5/tinymce.min.js"></script>
+        <script>
+            tinymce.init({
+                selector:'textarea'
+            });
+        </script>
+    </body>
+</html>

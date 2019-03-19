@@ -1,0 +1,46 @@
+{% extends "base.twig" %}
+
+{% block content %}
+    <header class="overflow-hidden">
+        <h1 class="float-left">{{ title }}</h1>
+        <a href="/admin/create" class="btn btn-outline-success float-right">Добавить новость</a>
+    </header>
+    <div class="w-100">
+
+        {% if data %}
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr class="table-warning">
+                        <th scope="col">ID</th>
+                        <th scope="col">Название</th>
+                        <th scope="col"><i class="fas fa-calendar-day mr-1"></i> Дата</th>
+                        <th scope="col">Действия</th>
+                    </tr>
+                </thead>
+                 <tbody>
+                {% for news in data %}
+                    <tr>
+                        <th scope="row">{{ news.id }}</th>
+                        <td><a href="/admin/{{ news.id }}">{{ news.title }}</a></td>
+                        <td class="text-muted">
+                            {{ news.createdAt | date("d/m/Y H:i") }}
+                        </td>
+                        <td class="text-center">
+                            <a href="/admin/edit/{{ news.id }}" class="text-warning mr-2" title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="/admin/delete/{{ news.id }}" class="text-danger mr-2 action-delete" title="Удалить">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <h1>Нет новостей</h1>
+        {% endif %}
+        {% include "pagination.twig" %}
+    </div>
+{% endblock %}

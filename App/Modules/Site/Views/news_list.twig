@@ -1,0 +1,28 @@
+{% extends "base.twig" %}
+
+{% block content %}
+    {% if data %}
+        {% for news in data %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <a href="/{{ news.id }}">
+                        <h5 class="d-inline-block">{{ news.title }}</h5>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">{{ news.text | raw }}</div>
+                    <p class="card-text float-right">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-day mr-1"></i>
+                            {{ news.createdAt | date("d/m/Y H:i") }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <h1>Нет новостей</h1>
+    {% endif %}
+{#    {{  p | raw }}#}
+    {% include "pagination.twig" %}
+{% endblock %}

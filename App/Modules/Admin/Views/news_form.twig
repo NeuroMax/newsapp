@@ -1,0 +1,32 @@
+{% extends "base.twig" %}
+
+{% block content %}
+    <h1>{% if edit %}<span class="text-muted">Редактирование:</span> </br> {{ title }}{% else %}{{ title }}{% endif %}</h1>
+    <form method="post">
+        <div class="form-group">
+            <label for="title">Заголовок</label>
+            <input
+                    type="text"
+                    class="form-control"
+                    id="title"
+                    name="title"
+                    placeholder="Введите заголовок новости"
+                    value="{{ edit ? data.title : '' }}"
+                   required>
+        </div>
+        <div class="form-group">
+            <label for="text">Текс новости</label>
+            <textarea
+                    class="form-control"
+                    id="text"
+                    rows="14"
+                    name="text"
+                    placeholder="Введите текст новости"
+                    required>
+                {{ edit ? data.text : '' }}
+            </textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ edit ? 'Сохранить' : 'Создать' }}</button>
+        <a href="/admin" class="btn btn-info">Отмена</a>
+    </form>
+{% endblock %}
