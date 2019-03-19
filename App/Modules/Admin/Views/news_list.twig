@@ -2,16 +2,16 @@
 
 {% block content %}
     <header class="overflow-hidden">
-        <h1 class="float-left">{{ title }}</h1>
+        <h1 class="float-left text-muted">{{ title }}</h1>
         <a href="/admin/create" class="btn btn-outline-success float-right">Добавить новость</a>
     </header>
     <div class="w-100">
 
         {% if data %}
 
-            <table class="table table-bordered">
-                <thead>
-                    <tr class="table-warning">
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
                         <th scope="col">ID</th>
                         <th scope="col">Название</th>
                         <th scope="col"><i class="fas fa-calendar-day mr-1"></i> Дата</th>

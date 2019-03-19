@@ -6,13 +6,29 @@ use App\Entities\News;
 use App\Services\Router\Request;
 use JasonGrimes\Paginator;
 
+/**
+ * Class NewsController Контроллер новостей
+ * @package App\Modules\Admin\Controllers
+ */
 class NewsController extends Controller
 {
+    /**
+     * NewsController constructor.
+     * @throws \Exception
+     */
     function __construct()
     {
         parent::__construct('Admin');
     }
 
+    /**
+     * Action список новостей
+     * @param Request $request
+     * @throws \ReflectionException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     public function index (Request $request)
     {
 
@@ -25,11 +41,14 @@ class NewsController extends Controller
         $countChars = 600;
         $totalItems = $news_list['count'];
 
-        $news_list = array_map(function ($n) use ($countChars) {
-            if (mb_strlen($n->text) > $countChars )
-                $n->text = mb_strimwidth($n->text, 0, $countChars) . '...';
-            return $n;
-        }, $news_list['data']);
+        if ($news_list)
+        {
+            $news_list = array_map(function ($n) use ($countChars) {
+                if (mb_strlen($n->text) > $countChars )
+                    $n->text = mb_strimwidth($n->text, 0, $countChars) . '...';
+                return $n;
+            }, $news_list['data']);
+        }
 
 
         $urlPattern = '/admin?p=(:num)';
@@ -38,6 +57,14 @@ class NewsController extends Controller
         $this->render('news_list.twig', ['title' => 'Список новостей', 'data' => $news_list, 'p' => $paginator]);
     }
 
+    /**
+     * Action отдельной новости по id
+     * @param Request $request
+     * @throws \ReflectionException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     public function get_by_id (Request $request)
     {
         $id = $request->getParams() ? $request->getParams()['id'] : false;
@@ -47,6 +74,14 @@ class NewsController extends Controller
         $this->render('news.twig', ['title' => $news->title, 'data' => $news]);
     }
 
+    /**
+     * Action Редактирование новости
+     * @param Request $request
+     * @throws \ReflectionException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     public function edit (Request $request)
     {
         $id = $request->getParams() ? $request->getParams()['id'] : false;
@@ -69,6 +104,11 @@ class NewsController extends Controller
         }
     }
 
+    /**
+     * Action Удаление новости
+     * @param Request $request
+     * @throws \ReflectionException
+     */
     public function delete (Request $request)
     {
         $id = $request->getParams() ? $request->getParams()['id'] : false;
@@ -83,6 +123,14 @@ class NewsController extends Controller
         $this->redirect('admin');
     }
 
+    /**
+     * Action Создание новости
+     * @param Request $request
+     * @throws \ReflectionException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     public function create (Request $request)
     {
         if ($request->getMethod() === Request::METHOD_POST)
@@ -92,8 +140,8 @@ class NewsController extends Controller
             $news = new News();
             $news->title = $data['title'] ?? '';
             $news->text = $data['text'] ?? '';
-            if ($news->Create())
-                $this->redirect('admin');
+            if ($id = $news->Create())
+                $this->redirect("admin/$id");
         } else $this->render('news_form.twig', ['title' => 'Создание новости']);
     }
 }

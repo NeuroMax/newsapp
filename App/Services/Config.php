@@ -2,11 +2,21 @@
 namespace App\Services;
 
 
-class Config
+use App\InvestedInterface;
+
+/**
+ * Class Config
+ * @package App\Services
+ */
+class Config implements InvestedInterface
 {
     /** @var object */
     private $conf;
 
+    /**
+     * Config constructor.
+     * @throws \Exception
+     */
     function __construct()
     {
         $path = __DIR__ . '/../Config/conf.json';
@@ -16,8 +26,10 @@ class Config
         $this->conf = json_decode($file);
     }
 
+
     /**
-     * @param string $str ('db:host')
+     * @param string $str
+     * @return bool|mixed|object
      */
     public function get (string $str) {
         $elements = explode(':', $str);
@@ -31,6 +43,11 @@ class Config
         return $conf;
     }
 
+    /**
+     * @param $conf
+     * @param string $param
+     * @return bool
+     */
     private function getParams ($conf, string $param) {
         if (property_exists($conf, $param)) return $conf->$param;
         return false;

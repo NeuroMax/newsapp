@@ -10,8 +10,8 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="card-text">{{ news.text | raw }}</div>
-                    <p class="card-text float-right">
+                    <div class="card-text">{{ news.text }}</div>
+                    <p class="card-text float-right mt-3">
                         <small class="text-muted">
                             <i class="fas fa-calendar-day mr-1"></i>
                             {{ news.createdAt | date("d/m/Y H:i") }}

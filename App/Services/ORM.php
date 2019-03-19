@@ -3,16 +3,25 @@
 namespace App\Services;
 
 use App\InvestedInterface;
-use App\Service;
 
-class ORM extends Service implements InvestedInterface
+/**
+ * Class ORM
+ * @package App\Services
+ */
+class ORM implements InvestedInterface
 {
     /** @var $db \mysqli */
     private static $db;
     /** @var $stack \SplStack */
     private static $stack;
 
-    static public function setup(\mysqli $dbi,$enc = "utf8")
+    /**
+     * @param \mysqli $dbi
+     * @param string $enc
+     * @return bool
+     * @throws \Exception
+     */
+    static public function setup(\mysqli $dbi, $enc = "utf8")
     {
         if (is_object($dbi)) {
             self::$db = $dbi;
@@ -24,6 +33,10 @@ class ORM extends Service implements InvestedInterface
         }
     }
 
+    /**
+     * @param $enc
+     * @return bool
+     */
     static function setEncoding($enc)
     {
         $result = self::$db->query("SET NAMES '$enc'");
@@ -31,45 +44,59 @@ class ORM extends Service implements InvestedInterface
         return $result ? true : false;
     }
 
+    /**
+     * @return string
+     */
     static function getError()
     {
         return self::$db->error." [".self::$db->errno."]";
     }
 
+    /**
+     * @param $string
+     * @return string
+     */
     private static function escape($string)
     {
         return mysqli_real_escape_string(self::$db,$string);
     }
 
+    /**
+     * @param $field
+     * @return string|string[]|null
+     */
     private static function RenderField($field)
     {
-        $r = "";															//Строка для возвращения
-        switch (gettype($field)) {											//Селектор типа передаваемого поля
-            case "integer":	case "float":									//Тип int или float
+        $r = "";
+        switch (gettype($field))  {
+            case "integer":	case "float":
             $r = $field;
             break;
-            case "NULL": 	$r = "NULL";  break;							//Тип NULL
-            case "boolean": $r = ($field) ? "true" : "false"; break;		//Тип boolean
-            case "string":													//если тип строковой
-                $p_function = "/^[a-zA-Z_]+\((.)*\)/";						//Шаблон на функцию
-                preg_match($p_function, $field,$mathes);			//Поиск соврадений на функцию
-                if (isset($mathes[0])){										//Совпадения есть, это функция
-                    $p_value = "/\((.+)\)/";								//Шаблон для выборки значения функции
-                    preg_match($p_value, $field,$mValue);			//Выборка значений
-                    if (isset($mValue[0]) && !empty($mValue[0])){			//Если данные между скобок существуют и не пустые
-                        $pv = trim($mValue[0],"()");				//Убираем скобки по концам
-                        $pv = "'".self::escape($pv)."'";					//Экранируем то что в скобках
-                        $r = preg_replace($p_value, "($pv)" , $field);	//Меняем под функцию
+            case "NULL": 	$r = "NULL";  break;
+            case "boolean": $r = ($field) ? "true" : "false"; break;
+            case "string":
+                $p_function = "/^[a-zA-Z_]+\((.)*\)/";
+                preg_match($p_function, $field,$mathes);
+                if (isset($mathes[0])){
+                    $p_value = "/\((.+)\)/";
+                    preg_match($p_value, $field,$mValue);
+                    if (isset($mValue[0]) && !empty($mValue[0])){
+                        $pv = trim($mValue[0],"()");
+                        $pv = "'".self::escape($pv)."'";
+                        $r = preg_replace($p_value, "($pv)" , $field);
                     }
-                    else $r = $field;										//Возвращаем функцию без параметров
+                    else $r = $field;
                 }
-                else $r = "'".self::escape($field)."'";						//Если просто строка экранируем
+                else $r = "'".self::escape($field)."'";
                 break;
-            default: $r = "'".self::escape($field)."'";	break;				//По умолчанию экранируем
+            default: $r = "'".self::escape($field)."'";	break;
         }
-        return $r;															//Возвращаем результат
+        return $r;
     }
 
+    /**
+     * @return array
+     */
     public static function _getVars()
     {
         return array_filter(get_class_vars(get_called_class()), function($elem) {
@@ -77,6 +104,9 @@ class ORM extends Service implements InvestedInterface
         });
     }
 
+    /**
+     * @return array
+     */
     public function _toArray()
     {
         $arr = [];
@@ -93,15 +123,35 @@ class ORM extends Service implements InvestedInterface
         return $arr;
     }
 
-    static function find(int $limit, int $offset)
+    /**
+     * @param int $limit
+     * @param int $offset
+     * @param array $where
+     * @return array|bool
+     * @throws \ReflectionException
+     */
+    static function find(int $limit, int $offset, array $where = [])
     {
         $table = strtolower((new \ReflectionClass(get_called_class()))->getShortName());
-        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM `".$table."` ORDER BY `createdAt` DESC LIMIT $limit OFFSET $offset";
+        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM `$table`";
+
+        if (!empty($where)) {
+            $query .= " WHERE ";
+            $arr = [];
+            foreach ($where as $key => $value)
+            {
+                $arr[] = " `$key` = '$value' ";
+            }
+
+            $query .= join(',', $arr);
+        }
+
+        $query .= " ORDER BY `createdAt` DESC LIMIT $limit OFFSET $offset";
         $qRows = "SELECT FOUND_ROWS() AS count";
-        $result = self::query($query, 'find');
+        $result = self::query($query, 'find', $err);
         $rows = mysqli_fetch_array(self::$db->query($qRows))['count'];
 
-        if ($result->num_rows > 0) {
+        if ($result && $result->num_rows > 0) {
 
             $rClasses = [];
             $cName = get_called_class();
@@ -118,88 +168,112 @@ class ORM extends Service implements InvestedInterface
         } else return false;
     }
 
+    /**
+     * @param $id
+     * @return bool
+     * @throws \ReflectionException
+     */
     static function findID($id)
     {
         $table = strtolower((new \ReflectionClass(get_called_class()))->getShortName());
-        if (is_numeric($id)) {												//Если число, то ищем по идентификатору
+        if (is_numeric($id)) {
             $keys = self::_getVars();
             $query = "SELECT * FROM `".$table."` WHERE `".key($keys)."` = $id LIMIT 1";
+            $result = self::query($query, 'find');
 
-            $result = self::query($query, 'find');					    //Отправляем запрос
-
-            if ($result->num_rows == 1) {									//Если запрос вернул строку
-                $row = $result->fetch_object();								//Строку запроса в класс
-                $cName = get_called_class();	                            //Получем название класса
-                $rClass = new $cName();										//Создаем экземпляр класса
-                foreach ($row as $key => $value) $rClass->$key = $value;	//Переносим свойства класса
-                return $rClass;												//Возвращаем класс
-            } else return false;											//Если строка не найдена, то ложь
-        } else return false;												//Если не число возвращаем ложь
+            if ($result->num_rows == 1) {
+                $row = $result->fetch_object();
+                $cName = get_called_class();
+                $rClass = new $cName();
+                foreach ($row as $key => $value) $rClass->$key = $value;
+                return $rClass;
+            } else return false;
+        } else return false;
     }
 
+    /**
+     * @return bool|mixed
+     * @throws \ReflectionException
+     */
     public function Save()
-    {									                                    //Сохраняем объект - UPDATE
+    {
         $table = strtolower((new \ReflectionClass(get_called_class()))->getShortName());
-        $id = key(self::_getVars());						                //Получаем идентификатор
-        if (!isset($this->$id) || empty($this->$id)) return $this->Create();	//Если пусто, добавляем
-        $query = "UPDATE `".$table."` SET ";	                            //Формируем запрос
-        $columns = self::_getVars();						                //Получем колонки таблицы
-        $Update = array();									                //Массив обновления
+        $id = key(self::_getVars());
+        if (!isset($this->$id) || empty($this->$id)) return $this->Create();
+        $query = "UPDATE `".$table."` SET ";
+        $columns = self::_getVars();
+        $Update = array();
 
-        foreach ($columns as $k => $v) {					                //перебираем все колонки
-            if ($id != $k)                                                  //Убираем идентификатор из запроса
-                $Update[] = "`".$k."` = ".self::RenderField($this->$k);	    //Оборачиваем в оболочки
+        foreach ($columns as $k => $v) {
+            if ($id != $k)
+                $Update[] = "`".$k."` = ".self::RenderField($this->$k);
         }
 
-        $query .= join(", ",$Update);					                //Дополняем запрос данными
-        $query .= " WHERE `$id` = ".self::escape($this->$id)." LIMIT 1";    //Дополняем запрос уточнениями
+        $query .= join(", ",$Update);
+        $query .= " WHERE `$id` = ".self::escape($this->$id)." LIMIT 1";
         $result = self::query($query, 'find');
-        return ($result) ? true : false;					                //Возвращаем ответ
+        return ($result) ? true : false;
     }
 
-    public function Create()
-    {									                                    //Добавляем объект - INSERT
+    /**
+     * @param string $err
+     * @return bool|mixed
+     * @throws \ReflectionException
+     */
+    public function Create(&$err = null)
+    {
         $table = strtolower((new \ReflectionClass(get_called_class()))->getShortName());
-        $query = "INSERT INTO `".$table."` (";	                            //Подготавливаем запрос
-        $columns = self::_getVars();                                        //Получем колонки
-        $q_column = array();								                //Массив полей для вставки
-        $q_data = array();									                //Массив данных для вставки
+        $query = "INSERT INTO `".$table."` (";
+        $columns = self::_getVars();
+        $q_column = array();
+        $q_data = array();
 
-        foreach ($columns as $k => $v){						                //Пробегаемся по столбцам
+        foreach ($columns as $k => $v){
             if (key($columns) == $k) continue;
-            $q_column[] = "`".$k."`";					                    //Обертываем в кавычки
+            $q_column[] = "`".$k."`";
             if ($k == 'createdAt') $this->$k = (new \DateTime('now'))->format('Y-m-d H:i:s');
-            $q_data[] 	= self::RenderField($this->$k);		                //Рендерим обертку для данных
+            $q_data[] 	= self::RenderField($this->$k);
         }
 
-        $query .= join(", ",$q_column).") VALUES (";	                //Дополняем запрос столбцами
-        $query .= join(", ",$q_data).")";				                //Дополняем запрос данными
-        $result = self::query($query, 'insert');			            //Делаем запрос
-        $insert_id = self::$db->insert_id;					                //Получаем идентификатор вставки
-
-        return ($result) ? $insert_id : false;				                //Возвращаем ответ
+        $query .= join(", ",$q_column).") VALUES (";
+        $query .= join(", ",$q_data).")";
+        $result = self::query($query, 'insert', $err);
+        $insert_id = self::$db->insert_id;
+        return ($result) ? $insert_id : false;
     }
 
+    /**
+     * @return bool
+     * @throws \ReflectionException
+     */
     public function Remove()
-    {								                                        //Удаляем объект - DELETE
+    {
         $table = strtolower((new \ReflectionClass(get_called_class()))->getShortName());
-        $id = key(self::_getVars());						                //Выбираем идентификатор
-        if (!empty($this->$id)){							                //Если идентификатор не пустой
+        $id = key(self::_getVars());
+        if (!empty($this->$id)){
             $qDel = "DELETE FROM `".$table."` WHERE `$id` = ".$this->$id." LIMIT 1";
-            $rDel = self::query($qDel, 'delete');			            //Запрос на удаление
-            return $rDel ? true : false;						            //Возвращаем ответ
-        } else return false;								                //Отрицательный ответ
+            $rDel = self::query($qDel, 'delete');
+            return $rDel ? true : false;
+        } else return false;
     }
 
-    private static function query ($query, $type)
+    /**
+     * @param $query
+     * @param $type
+     * @param string|null $err
+     * @return bool|\mysqli_result
+     */
+    private static function query ($query, $type, &$err = null)
     {
         $result = self::$db->query($query);
+        if (!$result) $err = self::getError();
         if ($type == 'find')
             self::$stack->push($query." [".$result->num_rows."]");
         if ($type == 'insert')
-            self::$stack->push($query." [".($result ? self::$db->insert_id : self::getError())."]");
+            self::$stack->push($query." [".($result ? self::$db->insert_id : $err)."]");
         if ($type == 'delete')
-            self::$stack->push($result." [".($result ? "TRUE" : self::getError())."]");
+            self::$stack->push($result." [".($result ? "TRUE" : $err)."]");
+
         return $result;
     }
 }
