@@ -43,7 +43,7 @@ class Container
      */
     public function remove (string $name)
     {
-        // @TODO lets do it
+        unset($this->container[$name]);
     }
 
     /**
@@ -53,8 +53,6 @@ class Container
      */
     private function has (string $name): bool
     {
-        if (!isset($this->container[$name]) || empty($this->container[$name]))
-            return false;
-        return true;
+        return isset($this->container[$name]);
     }
 }
